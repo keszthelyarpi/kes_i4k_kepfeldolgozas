@@ -45,6 +45,8 @@ class LaneFollowerNode(Node):
             return
 
         error, annotated_frame, mask = self.detector.process_frame(cv_frame)
+        if annotated_frame is None or mask is None:
+            return
 
         error_msg = Float32()
         error_msg.data = float(error)
@@ -55,9 +57,12 @@ class LaneFollowerNode(Node):
         self.annotated_pub.publish(annotated_msg)
 
         if self.get_parameter('show_gui').value:
-            cv2.imshow("Lane Tracking Debug Feed", annotated_frame)
-            cv2.imshow("Mask", mask)
-            cv2.waitKey(1)
+            try:
+                cv2.imshow("Lane Tracking Debug Feed", annotated_frame)
+                cv2.imshow("Mask", mask)
+                cv2.waitKey(1)
+            except Exception as e:
+                self.get_logger().warn(f"Nem sikerult a GUI ablakot megnyitni: {e}")
 
 
 def main(args=None):

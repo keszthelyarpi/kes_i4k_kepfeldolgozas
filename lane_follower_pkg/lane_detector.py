@@ -12,6 +12,9 @@ class LaneDetector:
         self.upper_bound = np.array(upper_hsv, dtype=np.uint8)
 
     def process_frame(self, frame):
+        if frame is None or frame.size == 0:
+            return 0.0, None, None
+
         h, w, _ = frame.shape
         annotated = frame.copy()
 
