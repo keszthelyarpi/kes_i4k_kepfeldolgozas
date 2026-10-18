@@ -59,7 +59,7 @@ if __name__ == '__main__':
     def nothing(x):
         pass
 
-    print("Onállo kamera tesz (Kilepes: 'q' billentyu)")
+    print("Onallo kamera tesz (Kilepes: 'q' billentyu)")
     detector = LaneDetector()
     cap = cv2.VideoCapture(0)
 
