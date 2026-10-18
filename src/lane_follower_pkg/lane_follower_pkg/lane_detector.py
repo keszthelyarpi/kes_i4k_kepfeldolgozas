@@ -1,10 +1,15 @@
 import cv2
 import numpy as np
 
+
 class LaneDetector:
-    def __init__(self):
-        self.lower_bound = np.array([15, 20, 70])
-        self.upper_bound = np.array([45, 255, 255])
+    def __init__(self, lower_hsv=(13, 55, 70), upper_hsv=(30, 255, 255)):
+        self.lower_bound = np.array(lower_hsv, dtype=np.uint8)
+        self.upper_bound = np.array(upper_hsv, dtype=np.uint8)
+
+    def set_hsv_bounds(self, lower_hsv, upper_hsv):
+        self.lower_bound = np.array(lower_hsv, dtype=np.uint8)
+        self.upper_bound = np.array(upper_hsv, dtype=np.uint8)
 
     def process_frame(self, frame):
         h, w, _ = frame.shape
@@ -25,7 +30,6 @@ class LaneDetector:
         error_norm = 0.0
 
         center_x = w // 2
-        center_y = roi_start_y + (h - roi_start_y) // 2
 
         cv2.line(annotated, (center_x, roi_start_y), (center_x, h), (255, 255, 255), 2)
 
@@ -50,8 +54,12 @@ class LaneDetector:
 
         return error_norm, annotated, mask
 
+
 if __name__ == '__main__':
-    print("Önálló kamera teszt indítása (Kilépés: 'q' billentyű)...")
+    def nothing(x):
+        pass
+
+    print("Onállo kamera tesz (Kilepes: 'q' billentyu)")
     detector = LaneDetector()
     cap = cv2.VideoCapture(0)
 
@@ -59,19 +67,38 @@ if __name__ == '__main__':
         print("Hiba: Nem sikerult megnyitni a webkamerat!")
         exit(1)
 
+    win_name = "2. HSV Mask (ROI)"
+    cv2.namedWindow(win_name)
+    cv2.createTrackbar("H min", win_name, int(detector.lower_bound[0]), 179, nothing)
+    cv2.createTrackbar("S min", win_name, int(detector.lower_bound[1]), 255, nothing)
+    cv2.createTrackbar("V min", win_name, int(detector.lower_bound[2]), 255, nothing)
+    cv2.createTrackbar("H max", win_name, int(detector.upper_bound[0]), 179, nothing)
+    cv2.createTrackbar("S max", win_name, int(detector.upper_bound[1]), 255, nothing)
+    cv2.createTrackbar("V max", win_name, int(detector.upper_bound[2]), 255, nothing)
+
     while True:
         ret, frame = cap.read()
         if not ret:
             print("Nem erkezik kep a kamerabol.")
             break
 
+        h_min = cv2.getTrackbarPos("H min", win_name)
+        s_min = cv2.getTrackbarPos("S min", win_name)
+        v_min = cv2.getTrackbarPos("V min", win_name)
+        h_max = cv2.getTrackbarPos("H max", win_name)
+        s_max = cv2.getTrackbarPos("S max", win_name)
+        v_max = cv2.getTrackbarPos("V max", win_name)
+
+        detector.set_hsv_bounds((h_min, s_min, v_min), (h_max, s_max, v_max))
+
         err, annotated_img, mask_img = detector.process_frame(frame)
 
         cv2.imshow("1. Lane Detector - Standalone Test", annotated_img)
-        cv2.imshow("2. HSV Mask (ROI)", mask_img)
+        cv2.imshow(win_name, mask_img)
 
-        # 'q' megnyomására kilép
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            print(f"\nBeállított értékek:")
+            print(f"lower_hsv=({h_min}, {s_min}, {v_min}), upper_hsv=({h_max}, {s_max}, {v_max})")
             break
 
     cap.release()
